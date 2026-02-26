@@ -9,7 +9,11 @@
       "Bash(git config user.email \"noreply@anthropic.com\")",
       "Bash(git config user.name \"Claude Code\")",
       "Bash(git add -A)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nBuild complete Petronas EMCAI Dashboard\n\nFeatures implemented:\n- 6 fully functional tabs (Overview, Inventory, Maintenance, Tools, AI Assistant, Reports)\n- Real-time data integration with n8n webhooks\n- Alert system (low stock, overdue audits, overdue tools)\n- Interactive Plotly visualizations\n- AI chatbot integration (GraphRAG)\n- Report generation (CSV, Excel downloads)\n- Advanced filters and search\n- Sample data for demo mode\n\nTechnical stack:\n- Streamlit frontend\n- n8n backend integration\n- Plotly charts\n- Pandas data processing\n\nReady for deployment to Streamlit Cloud!\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nBuild complete Petronas EMCAI Dashboard\n\nFeatures implemented:\n- 6 fully functional tabs (Overview, Inventory, Maintenance, Tools, AI Assistant, Reports)\n- Real-time data integration with n8n webhooks\n- Alert system (low stock, overdue audits, overdue tools)\n- Interactive Plotly visualizations\n- AI chatbot integration (GraphRAG)\n- Report generation (CSV, Excel downloads)\n- Advanced filters and search\n- Sample data for demo mode\n\nTechnical stack:\n- Streamlit frontend\n- n8n backend integration\n- Plotly charts\n- Pandas data processing\n\nReady for deployment to Streamlit Cloud!\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(python -m pip install streamlit pandas plotly requests python-dateutil openpyxl --quiet)",
+      "Bash(py --version)",
+      "Bash(py test_import.py)",
+      "Bash(git commit -m \"Add deployment guide and testing files\n\n- DEPLOYMENT.md with step-by-step Streamlit Cloud deployment\n- test_import.py for verifying dependencies\n- Complete deployment checklist for tomorrow''s presentation\n\nReady to deploy!\")"
     ],
     "deny": [],
     "ask": []
