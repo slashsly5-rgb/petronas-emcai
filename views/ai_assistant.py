@@ -47,7 +47,8 @@ def render():
         if message['role'] == 'user':
             st.markdown(f"**You:** {message['content']}")
         else:
-            st.markdown(f"**AI:** {message['content']}")
+            st.markdown("**AI:**")
+            st.markdown(message['content'], unsafe_allow_html=True)
         st.markdown("---")
 
     # Chat input
