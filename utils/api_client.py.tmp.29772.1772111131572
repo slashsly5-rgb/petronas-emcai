@@ -1,0 +1,233 @@
+"""API Client for n8n webhook integration"""
+import requests
+import pandas as pd
+from typing import Dict, List, Optional
+from datetime import datetime
+import config
+
+class N8NClient:
+    """Client for interacting with n8n webhooks"""
+
+    def __init__(self):
+        self.timeout = 10
+        self.max_retries = 3
+
+    def _make_request(self, method: str, url: str, data: Optional[Dict] = None) -> Optional[Dict]:
+        """Make HTTP request with retry logic"""
+        for attempt in range(self.max_retries):
+            try:
+                if method == "GET":
+                    response = requests.get(url, timeout=self.timeout)
+                elif method == "POST":
+                    response = requests.post(url, json=data, timeout=self.timeout)
+                elif method == "PUT":
+                    response = requests.put(url, json=data, timeout=self.timeout)
+                elif method == "DELETE":
+                    response = requests.delete(url, timeout=self.timeout)
+
+                response.raise_for_status()
+                return response.json() if response.text else {}
+            except requests.exceptions.RequestException as e:
+                if attempt == self.max_retries - 1:
+                    print(f"Request failed after {self.max_retries} attempts: {e}")
+                    return None
+        return None
+
+    def get_components(self, filters: Optional[Dict] = None) -> pd.DataFrame:
+        """Fetch component inventory"""
+        result = self._make_request("GET", config.ENDPOINTS["components"]["list"])
+
+        if result is None:
+            # Return sample data for demo if n8n is not available
+            return self._get_sample_components()
+
+        # Convert to DataFrame
+        if isinstance(result, list):
+            return pd.DataFrame(result)
+        elif isinstance(result, dict) and "data" in result:
+            return pd.DataFrame(result["data"])
+        else:
+            return self._get_sample_components()
+
+    def get_logs(self, filters: Optional[Dict] = None) -> pd.DataFrame:
+        """Fetch maintenance logs"""
+        result = self._make_request("GET", config.ENDPOINTS["logs"]["list"])
+
+        if result is None:
+            return self._get_sample_logs()
+
+        if isinstance(result, list):
+            return pd.DataFrame(result)
+        elif isinstance(result, dict) and "data" in result:
+            return pd.DataFrame(result["data"])
+        else:
+            return self._get_sample_logs()
+
+    def get_tools(self, filters: Optional[Dict] = None) -> pd.DataFrame:
+        """Fetch tool tracking records"""
+        result = self._make_request("GET", config.ENDPOINTS["tools"]["list"])
+
+        if result is None:
+            return self._get_sample_tools()
+
+        if isinstance(result, list):
+            return pd.DataFrame(result)
+        elif isinstance(result, dict) and "data" in result:
+            return pd.DataFrame(result["data"])
+        else:
+            return self._get_sample_tools()
+
+    def query_ai(self, query: str) -> str:
+        """Query GraphRAG AI endpoint"""
+        try:
+            # Try POST first
+            response = requests.post(
+                config.GRAPHRAG_ENDPOINT,
+                json={"query": query},
+                timeout=60  # Increased timeout for AI processing
+            )
+
+            # If POST fails with 404 (not registered for POST), try GET
+            if response.status_code == 404 and "GET request" in response.text:
+                from urllib.parse import urlencode
+                params = {"query": query}
+                response = requests.get(
+                    f"{config.GRAPHRAG_ENDPOINT}?{urlencode(params)}",
+                    timeout=60  # Increased timeout for AI processing
+                )
+
+            response.raise_for_status()
+
+            # Try to parse as JSON first
+            try:
+                result = response.json()
+
+                # Handle different response formats
+                if isinstance(result, dict):
+                    # Check for various response key names
+                    if 'response' in result:
+                        return result['response']
+                    elif 'answer' in result:
+                        return result['answer']
+                    elif 'output' in result:
+                        return result['output']
+                    elif 'message' in result:
+                        # If workflow just started, return a message
+                        if result['message'] == "Workflow was started":
+                            return "AI workflow started successfully! Please wait, your n8n webhook might be configured for async execution. If you don't see a response soon, check that the Webhook node is set to 'Using Respond to Webhook Node'."
+                        return result['message']
+                    else:
+                        return str(result)
+                return str(result)
+            except ValueError:
+                # If response is not JSON, return as plain text
+                return response.text
+
+        except Exception as e:
+            return f"AI service unavailable: {str(e)}"
+
+    def _get_sample_components(self) -> pd.DataFrame:
+        """Sample component data based on user's screenshot"""
+        return pd.DataFrame([
+            {"Component_ID": "PLC-CPU-1001", "Item_Name": "PLC Processor", "Category": "Electrical",
+             "Specification": "S7-1500 / ControlLogix", "Manufacturer": "GE Alstom", "Stock_Qty": 44,
+             "Unit_Price": 2100, "Location": "YARD-ALPHA-65", "Condition": "New", "Last_Audit": "2025-04-10"},
+            {"Component_ID": "CB-VC-1002", "Item_Name": "Vacuum Circuit Breaker", "Category": "Electrical",
+             "Specification": "12kV 1250A Drawout", "Manufacturer": "ABB", "Stock_Qty": 6,
+             "Unit_Price": 3200, "Location": "WH-ZN-C-14", "Condition": "Used", "Last_Audit": "2025-12-07"},
+            {"Component_ID": "CAB-HV-1003", "Item_Name": "XLPE Power Cable", "Category": "Electrical",
+             "Specification": "3-Core 185mm Cu", "Manufacturer": "Crompton", "Stock_Qty": 41,
+             "Unit_Price": 45, "Location": "SUBSTATION-02-39", "Condition": "Refurbished", "Last_Audit": "2025-08-01"},
+            {"Component_ID": "BAT-DC-1004", "Item_Name": "Substation Battery", "Category": "Electrical",
+             "Specification": "110V Ni-Cd Bank", "Manufacturer": "Eaton", "Stock_Qty": 47,
+             "Unit_Price": 5500, "Location": "WH-ZN-B-17", "Condition": "Used", "Last_Audit": "2025-10-15"},
+            {"Component_ID": "PLC-CPU-1005", "Item_Name": "PLC Processor", "Category": "Electrical",
+             "Specification": "S7-1500 / ControlLogix", "Manufacturer": "Schneider", "Stock_Qty": 13,
+             "Unit_Price": 2100, "Location": "YARD-ALPHA-17", "Condition": "Refurbished", "Last_Audit": "2025-06-03"},
+            {"Component_ID": "BAT-DC-1006", "Item_Name": "Substation Battery", "Category": "Electrical",
+             "Specification": "110V Ni-Cd Bank", "Manufacturer": "ABB", "Stock_Qty": 29,
+             "Unit_Price": 5500, "Location": "SUBSTATION-02-3", "Condition": "New", "Last_Audit": "2025-07-26"},
+            {"Component_ID": "BAT-DC-1007", "Item_Name": "Substation Battery", "Category": "Electrical",
+             "Specification": "110V Ni-Cd Bank", "Manufacturer": "Crompton", "Stock_Qty": 23,
+             "Unit_Price": 5500, "Location": "WH-ZN-C-33", "Condition": "New", "Last_Audit": "2025-01-08"},
+            {"Component_ID": "TR-HV-1008", "Item_Name": "Power Transformer", "Category": "Electrical",
+             "Specification": "11kV/33kV Oil Immersed", "Manufacturer": "ABB", "Stock_Qty": 9,
+             "Unit_Price": 15000, "Location": "WH-ZN-A-47", "Condition": "New", "Last_Audit": "2025-02-27"},
+            {"Component_ID": "BAT-DC-1009", "Item_Name": "Substation Battery", "Category": "Electrical",
+             "Specification": "110V Ni-Cd Bank", "Manufacturer": "Siemens", "Stock_Qty": 50,
+             "Unit_Price": 5500, "Location": "WH-ZN-B-11", "Condition": "New", "Last_Audit": "2025-02-28"},
+            {"Component_ID": "PLC-CPU-1010", "Item_Name": "PLC Processor", "Category": "Electrical",
+             "Specification": "S7-1500 / ControlLogix", "Manufacturer": "Crompton", "Stock_Qty": 27,
+             "Unit_Price": 2100, "Location": "YARD-ALPHA-6", "Condition": "New", "Last_Audit": "2025-10-26"},
+            {"Component_ID": "PLC-CPU-1011", "Item_Name": "PLC Processor", "Category": "Electrical",
+             "Specification": "S7-1500 / ControlLogix", "Manufacturer": "Schneider", "Stock_Qty": 10,
+             "Unit_Price": 2100, "Location": "WH-ZN-C-23", "Condition": "New", "Last_Audit": "2025-12-18"},
+            {"Component_ID": "PLC-CPU-1012", "Item_Name": "PLC Processor", "Category": "Electrical",
+             "Specification": "S7-1500 / ControlLogix", "Manufacturer": "GE Alstom", "Stock_Qty": 28,
+             "Unit_Price": 2100, "Location": "WH-ZN-B-38", "Condition": "New", "Last_Audit": "2025-03-25"},
+            {"Component_ID": "INV-SOL-1013", "Item_Name": "Solar Inverter", "Category": "Electrical",
+             "Specification": "50kW Grid-Tied", "Manufacturer": "Crompton", "Stock_Qty": 45,
+             "Unit_Price": 2800, "Location": "SUBSTATION-02-80", "Condition": "New", "Last_Audit": "2025-04-06"},
+            {"Component_ID": "RL-PR-1014", "Item_Name": "Protection Relay", "Category": "Electrical",
+             "Specification": "SIPROTEC 5 / MICOM", "Manufacturer": "Siemens", "Stock_Qty": 29,
+             "Unit_Price": 1200, "Location": "WH-ZN-B-14", "Condition": "Used", "Last_Audit": "2025-03-23"},
+        ])
+
+    def _get_sample_logs(self) -> pd.DataFrame:
+        """Sample maintenance log data"""
+        return pd.DataFrame([
+            {"Log_ID": "LOG-2025-0001", "Date": "2025-05-23", "Component_ID": "PLC-CPU-1258",
+             "Task_Type": "Emergency", "Technician": "John Doe", "Outcome": "Fail", "Remarks": "Oil leakage observed"},
+            {"Log_ID": "LOG-2025-0002", "Date": "2025-01-26", "Component_ID": "INV-SOL-1290",
+             "Task_Type": "Emergency", "Technician": "Sarah Wong", "Outcome": "Pass", "Remarks": "Excessive vibration detected"},
+            {"Log_ID": "LOG-2025-0003", "Date": "2025-07-16", "Component_ID": "TR-HV-1497",
+             "Task_Type": "Inspection", "Technician": "Ahmad Zulkifli", "Outcome": "Pass", "Remarks": "Communication error"},
+            {"Log_ID": "LOG-2025-0004", "Date": "2025-05-25", "Component_ID": "RL-PR-1407",
+             "Task_Type": "Inspection", "Technician": "Rajesh Kumar", "Outcome": "Pass", "Remarks": "Communication error"},
+            {"Log_ID": "LOG-2025-0005", "Date": "2025-01-05", "Component_ID": "CAB-HV-1027",
+             "Task_Type": "Inspection", "Technician": "Rajesh Kumar", "Outcome": "Warning", "Remarks": "Excessive vibration detected"},
+            {"Log_ID": "LOG-2025-0006", "Date": "2025-02-07", "Component_ID": "TR-HV-1397",
+             "Task_Type": "Inspection", "Technician": "Sarah Wong", "Outcome": "Warning", "Remarks": "Overheating detected"},
+            {"Log_ID": "LOG-2025-0007", "Date": "2025-10-16", "Component_ID": "CAB-HV-1300",
+             "Task_Type": "Inspection", "Technician": "John Doe", "Outcome": "Pass", "Remarks": "Overheating detected"},
+            {"Log_ID": "LOG-2025-0008", "Date": "2025-11-10", "Component_ID": "TR-HV-1244",
+             "Task_Type": "Corrective", "Technician": "Rajesh Kumar", "Outcome": "Warning", "Remarks": "Silica gel breather is saturated"},
+            {"Log_ID": "LOG-2025-0009", "Date": "2025-07-25", "Component_ID": "CAB-HV-1284",
+             "Task_Type": "Inspection", "Technician": "John Doe", "Outcome": "Warning", "Remarks": "Battery voltage drop"},
+            {"Log_ID": "LOG-2025-0010", "Date": "2025-01-01", "Component_ID": "CB-VC-1032",
+             "Task_Type": "Inspection", "Technician": "Rajesh Kumar", "Outcome": "Fail", "Remarks": "Silica gel breather is saturated"},
+            {"Log_ID": "LOG-2025-0011", "Date": "2025-04-08", "Component_ID": "BAT-DC-1451",
+             "Task_Type": "Preventive", "Technician": "John Doe", "Outcome": "Pass", "Remarks": "Communication error"},
+            {"Log_ID": "LOG-2025-0012", "Date": "2025-06-27", "Component_ID": "INV-SOL-1039",
+             "Task_Type": "Preventive", "Technician": "Chong Wei", "Outcome": "Warning", "Remarks": "Insulation resistance low"},
+        ])
+
+    def _get_sample_tools(self) -> pd.DataFrame:
+        """Sample tool tracking data"""
+        return pd.DataFrame([
+            {"Tracking_ID": "TRK-5001", "Tool_Name": "Megger Insulation Tester", "Assigned_To": "Ahmad Zulkifli",
+             "Date_Out": "2026-01-01", "Date_Due": "2026-01-08", "Status": "Overdue", "Condition": "Damaged"},
+            {"Tracking_ID": "TRK-5002", "Tool_Name": "Fluke Multimeter", "Assigned_To": "Rajesh Kumar",
+             "Date_Out": "2026-01-24", "Date_Due": "2026-01-31", "Status": "Lost", "Condition": "Needs Calibration"},
+            {"Tracking_ID": "TRK-5003", "Tool_Name": "Fluke Multimeter", "Assigned_To": "Rajesh Kumar",
+             "Date_Out": "2026-02-01", "Date_Due": "2026-02-08", "Status": "Returned", "Condition": "Good"},
+            {"Tracking_ID": "TRK-5004", "Tool_Name": "Arc Flash Suit", "Assigned_To": "Sarah Wong",
+             "Date_Out": "2026-02-02", "Date_Due": "2026-02-09", "Status": "Lost", "Condition": "Damaged"},
+            {"Tracking_ID": "TRK-5005", "Tool_Name": "Safety Harness", "Assigned_To": "Siti Aminah",
+             "Date_Out": "2026-02-05", "Date_Due": "2026-02-12", "Status": "Returned", "Condition": "Damaged"},
+            {"Tracking_ID": "TRK-5006", "Tool_Name": "Arc Flash Suit", "Assigned_To": "Siti Aminah",
+             "Date_Out": "2026-02-07", "Date_Due": "2026-02-14", "Status": "Returned", "Condition": "Good"},
+            {"Tracking_ID": "TRK-5007", "Tool_Name": "Arc Flash Suit", "Assigned_To": "Sarah Wong",
+             "Date_Out": "2026-01-18", "Date_Due": "2026-01-25", "Status": "Lost", "Condition": "Good"},
+            {"Tracking_ID": "TRK-5008", "Tool_Name": "Fluke Multimeter", "Assigned_To": "Rajesh Kumar",
+             "Date_Out": "2026-01-06", "Date_Due": "2026-01-13", "Status": "Overdue", "Condition": "Good"},
+            {"Tracking_ID": "TRK-5009", "Tool_Name": "Safety Harness", "Assigned_To": "Sarah Wong",
+             "Date_Out": "2026-01-18", "Date_Due": "2026-01-25", "Status": "Returned", "Condition": "Good"},
+            {"Tracking_ID": "TRK-5010", "Tool_Name": "Laptop", "Assigned_To": "Sarah Wong",
+             "Date_Out": "2026-01-08", "Date_Due": "2026-01-15", "Status": "Lost", "Condition": "Good"},
+            {"Tracking_ID": "TRK-5011", "Tool_Name": "Laptop", "Assigned_To": "Ahmad Zulkifli",
+             "Date_Out": "2026-02-12", "Date_Due": "2026-02-19", "Status": "Overdue", "Condition": "Good"},
+        ])
+
+# Global client instance
+client = N8NClient()

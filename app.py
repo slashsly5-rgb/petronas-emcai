@@ -121,27 +121,27 @@ try:
 
     # Import and render tab contents
     with tab1:
-        from pages import overview
+        from views import overview
         overview.render(components_df, logs_df, tools_df, inventory_alerts, tool_alerts)
 
     with tab2:
-        from pages import inventory
+        from views import inventory
         inventory.render(components_df, inventory_alerts)
 
     with tab3:
-        from pages import maintenance
+        from views import maintenance
         maintenance.render(logs_df)
 
     with tab4:
-        from pages import tools
+        from views import tools
         tools.render(tools_df, tool_alerts)
 
     with tab5:
-        from pages import ai_assistant
+        from views import ai_assistant
         ai_assistant.render()
 
     with tab6:
-        from pages import reports
+        from views import reports
         reports.render(components_df, logs_df, tools_df)
 
 except Exception as e:

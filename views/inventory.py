@@ -81,15 +81,15 @@ def render(components_df, inventory_alerts):
 
     with col_viz1:
         fig = charts.create_stock_by_location_chart(filtered_df)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="inventory_stock_location_chart")
 
     with col_viz2:
         fig = charts.create_condition_pie_chart(filtered_df)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, key="inventory_condition_pie_chart")
 
     # Manufacturer distribution
     fig = charts.create_manufacturer_chart(filtered_df)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="inventory_manufacturer_chart")
 
     # Alert Details
     if len(inventory_alerts['low_stock_critical']) > 0 or len(inventory_alerts['overdue_audit']) > 0:

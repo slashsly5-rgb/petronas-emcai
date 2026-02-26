@@ -116,24 +116,24 @@ def render(logs_df):
     with col_v1:
         if len(filtered_df) > 0:
             fig = charts.create_task_type_chart(filtered_df)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="maintenance_task_type_chart")
 
     with col_v2:
         if len(filtered_df) > 0:
             fig = charts.create_outcome_chart(filtered_df)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="maintenance_outcome_chart")
 
     col_v3, col_v4 = st.columns(2)
 
     with col_v3:
         if len(filtered_df) > 0:
             fig = charts.create_technician_workload_chart(filtered_df)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="maintenance_tech_workload_chart")
 
     with col_v4:
         if len(filtered_df) > 0:
             fig = charts.create_maintenance_trend_chart(filtered_df)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="maintenance_trend_chart")
 
     # Failure Analysis
     st.markdown("---")

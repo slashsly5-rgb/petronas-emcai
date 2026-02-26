@@ -107,19 +107,19 @@ def render(tools_df, tool_alerts):
     with col_v1:
         if len(filtered_df) > 0:
             fig = charts.create_tool_status_chart(filtered_df)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="tools_tool_status_chart")
 
     with col_v2:
         if len(filtered_df) > 0:
             fig = charts.create_tool_usage_chart(filtered_df)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="tools_tool_usage_chart")
 
     # Availability gauge
     total_tools = len(tools_df)
     available_tools = len(tools_df[tools_df['Status'] == 'Returned'])
 
     fig = charts.create_gauge_chart(available_tools, total_tools, "Tool Availability %")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key="tools_availability_gauge")
 
     # Alert Details
     if len(tool_alerts['overdue']) > 0 or len(tool_alerts['lost']) > 0 or len(tool_alerts['damaged']) > 0:

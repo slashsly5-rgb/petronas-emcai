@@ -65,26 +65,23 @@ def render(components_df, logs_df, tools_df, inventory_alerts, tool_alerts):
         low_stock = len(components_df[(components_df['Stock_Qty'] >= 10) & (components_df['Stock_Qty'] <= 15)])
         critical_stock = len(components_df[components_df['Stock_Qty'] < 10])
 
-        health_df = pd.DataFrame({
-            'Status': ['Good Stock', 'Low Stock', 'Critical Stock'],
-            'Count': [good_stock, low_stock, critical_stock]
-        })
-
-        import plotly.express as px
-        fig = px.pie(health_df, values='Count', names='Status',
-                     color_discrete_sequence=['#4CAF50', '#FF9800', '#F44336'])
-        st.plotly_chart(fig, use_container_width=True)
+        if len(components_df) > 0:
+            fig = charts.create_condition_pie_chart(components_df)
+            st.plotly_chart(fig, use_container_width=True, key="overview_condition_pie_chart")
+        else:
+            st.info("No component data to display inventory health.")
 
     with col_right:
         st.subheader("Maintenance Trends (Last 90 days)")
-        logs_df_copy = logs_df.copy()
-        logs_df_copy['Date'] = pd.to_datetime(logs_df_copy['Date'])
-        ninety_days_ago = datetime.now() - timedelta(days=90)
-        recent_logs = logs_df_copy[logs_df_copy['Date'] >= ninety_days_ago]
-
-        if len(recent_logs) > 0:
+        if len(logs_df) > 0:
+            # Filter logs to last 90 days for better trend visualization
+            recent_logs = logs_df.copy()
+            recent_logs['Date'] = pd.to_datetime(recent_logs['Date'])
+            cutoff_date = datetime.now() - timedelta(days=90)
+            recent_logs = recent_logs[recent_logs['Date'] >= cutoff_date]
+            
             fig = charts.create_maintenance_trend_chart(recent_logs)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="overview_maintenance_trend_chart")
         else:
             st.info("No maintenance data in the last 90 days")
 
@@ -93,13 +90,19 @@ def render(components_df, logs_df, tools_df, inventory_alerts, tool_alerts):
 
     with col_tool1:
         st.subheader("Tool Status Distribution")
-        fig = charts.create_tool_status_chart(tools_df)
-        st.plotly_chart(fig, use_container_width=True)
-
+        if len(tools_df) > 0:
+            fig = charts.create_tool_status_chart(tools_df)
+            st.plotly_chart(fig, use_container_width=True, key="overview_tool_status_chart")
+        else:
+            st.info("No tool data to display status distribution.")
+            
     with col_tool2:
         st.subheader("Top Locations by Component Count")
-        fig = charts.create_stock_by_location_chart(components_df)
-        st.plotly_chart(fig, use_container_width=True)
+        if len(components_df) > 0:
+            fig = charts.create_stock_by_location_chart(components_df)
+            st.plotly_chart(fig, use_container_width=True, key="overview_stock_location_chart")
+        else:
+            st.info("No component data to display stock by location.")
 
     # Recent Activity
     st.markdown("---")
