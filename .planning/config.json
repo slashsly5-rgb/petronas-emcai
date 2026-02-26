@@ -1,0 +1,18 @@
+{
+  "workflow": {
+    "researcher_model": "sonnet",
+    "synthesizer_model": "sonnet",
+    "roadmapper_model": "sonnet",
+    "planner_model": "sonnet",
+    "executor_model": "sonnet",
+    "commit_docs": true,
+    "auto_commit_code": false,
+    "verification_mode": "interactive"
+  },
+  "project": {
+    "name": "Petronas EMCAI",
+    "type": "greenfield",
+    "stack": ["Python", "Streamlit", "n8n", "Supabase"],
+    "deployment": "streamlit-cloud"
+  }
+}
