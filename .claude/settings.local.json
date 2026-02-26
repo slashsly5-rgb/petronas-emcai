@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node C:/Users/slash/.claude/get-shit-done/bin/gsd-tools.cjs init new-project)",
+      "Bash(git init)",
+      "Bash(mkdir -p .planning)",
+      "Bash(git add .planning/)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitialize Petronas EMCAI project planning\n\n- Create comprehensive PROJECT.md with vision, architecture, and success metrics\n- Define detailed REQUIREMENTS.md (functional, non-functional, data, integration)\n- Build 9-phase ROADMAP.md with 4-5 week timeline\n- Establish config.json for workflow preferences\n- Initialize STATE.md for project memory tracking\n\nNext: Run /gsd:plan-phase 1 to begin development\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git config user.email \"noreply@anthropic.com\")",
+      "Bash(git config user.name \"Claude Code\")",
+      "Bash(git add -A)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nBuild complete Petronas EMCAI Dashboard\n\nFeatures implemented:\n- 6 fully functional tabs (Overview, Inventory, Maintenance, Tools, AI Assistant, Reports)\n- Real-time data integration with n8n webhooks\n- Alert system (low stock, overdue audits, overdue tools)\n- Interactive Plotly visualizations\n- AI chatbot integration (GraphRAG)\n- Report generation (CSV, Excel downloads)\n- Advanced filters and search\n- Sample data for demo mode\n\nTechnical stack:\n- Streamlit frontend\n- n8n backend integration\n- Plotly charts\n- Pandas data processing\n\nReady for deployment to Streamlit Cloud!\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
