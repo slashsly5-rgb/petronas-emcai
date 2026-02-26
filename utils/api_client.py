@@ -84,7 +84,7 @@ class N8NClient:
             response = requests.post(
                 config.GRAPHRAG_ENDPOINT,
                 json={"query": query},
-                timeout=30
+                timeout=60  # Increased timeout for AI processing
             )
 
             # If POST fails with 404 (not registered for POST), try GET
@@ -93,29 +93,36 @@ class N8NClient:
                 params = {"query": query}
                 response = requests.get(
                     f"{config.GRAPHRAG_ENDPOINT}?{urlencode(params)}",
-                    timeout=30
+                    timeout=60  # Increased timeout for AI processing
                 )
 
             response.raise_for_status()
-            result = response.json()
 
-            # Handle different response formats
-            if isinstance(result, dict):
-                # Check for various response key names
-                if 'response' in result:
-                    return result['response']
-                elif 'answer' in result:
-                    return result['answer']
-                elif 'output' in result:
-                    return result['output']
-                elif 'message' in result:
-                    # If workflow just started, return a message
-                    if result['message'] == "Workflow was started":
-                        return "✅ AI workflow started successfully! Note: Your n8n workflow is configured for async execution. To get immediate responses, configure the Webhook node in n8n to 'Respond When Last Node Finishes' and add a 'Respond to Webhook' node at the end of your workflow."
-                    return result['message']
-                else:
-                    return str(result)
-            return str(result)
+            # Try to parse as JSON first
+            try:
+                result = response.json()
+
+                # Handle different response formats
+                if isinstance(result, dict):
+                    # Check for various response key names
+                    if 'response' in result:
+                        return result['response']
+                    elif 'answer' in result:
+                        return result['answer']
+                    elif 'output' in result:
+                        return result['output']
+                    elif 'message' in result:
+                        # If workflow just started, return a message
+                        if result['message'] == "Workflow was started":
+                            return "AI workflow started successfully! Please wait, your n8n webhook might be configured for async execution. If you don't see a response soon, check that the Webhook node is set to 'Using Respond to Webhook Node'."
+                        return result['message']
+                    else:
+                        return str(result)
+                return str(result)
+            except ValueError:
+                # If response is not JSON, return as plain text
+                return response.text
+
         except Exception as e:
             return f"AI service unavailable: {str(e)}"
 
