@@ -84,7 +84,7 @@ class N8NClient:
             response = requests.post(
                 config.GRAPHRAG_ENDPOINT,
                 json={"query": query},
-                timeout=60  # Increased timeout for AI processing
+                timeout=300  # Increased timeout for complex AI processing (5 minutes)
             )
 
             # If POST fails with 404 (not registered for POST), try GET
@@ -93,7 +93,7 @@ class N8NClient:
                 params = {"query": query}
                 response = requests.get(
                     f"{config.GRAPHRAG_ENDPOINT}?{urlencode(params)}",
-                    timeout=60  # Increased timeout for AI processing
+                    timeout=300  # Increased timeout for complex AI processing (5 minutes)
                 )
 
             response.raise_for_status()
